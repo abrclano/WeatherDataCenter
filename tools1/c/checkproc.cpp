@@ -17,7 +17,6 @@ int main(int argc, char *argv[]) {
   if (argc != 2) {
     printf("\n");
     printf("Using:./checkproc logfilename\n");
-
     printf(
         "Example:/project/tools1/bin/procctl 10 /project/tools1/bin/checkproc "
         "/tmp/log/checkproc.log\n\n");
