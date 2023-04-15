@@ -20,7 +20,6 @@ int main(int argc, char *argv[]) {
     printf(
         "Example:/project/tools1/bin/procctl 10 /project/tools1/bin/checkproc "
         "/tmp/log/checkproc.log\n\n");
-
     printf("本程序用于检查后台服务程序是否超时，如果已超时，就终止它。\n");
     printf("注意：\n");
     printf("  1）本程序由procctl启动，运行周期建议为10秒。\n");
