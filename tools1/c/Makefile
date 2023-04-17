@@ -39,4 +39,4 @@ deletefiles:deletefiles.cpp
 	cp deletefiles ../bin/.
 
 clean:
-	rm procctl shm HBMechanism checkproc test gzipfiles deletefiles
+	rm -f procctl shm HBMechanism checkproc test gzipfiles deletefiles
