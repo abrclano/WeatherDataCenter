@@ -1,16 +1,16 @@
 # WeatherDataCenter
 
 ## idc
-include produce and w/r data
+气象数据中心项目模块
 
 ## pthread
-some examples about pthread
+Linux线程demo
 
 ## public
-include public library or methods
+开发框架以及一些demo
 
 ## tools
-include some methods like ftpgetfiles, tcpgetfiles...
+通用功能模块
 
 ## 目录结构
 ```
