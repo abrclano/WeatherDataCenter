@@ -7,7 +7,7 @@ PUBCPP = /project/public/_public.cpp
 # 编译参数
 CFLAGS = -g
 
-all: procctl shm HBMechanism checkproc test gzipfiles deletefiles ftpclient
+all: procctl shm HBMechanism checkproc test gzipfiles deletefiles ftpclient ftpgetfiles
 
 procctl:procctl.cpp
 	g++ $(CFLAGS) -o procctl procctl.cpp $(PUBINCL) $(PUBCPP) -lm -lc
@@ -42,5 +42,9 @@ ftpclient:ftpclient.cpp
 	g++ $(CFLAGS) -o ftpclient ftpclient.cpp /project/public/_ftp.cpp $(PUBCPP) $(PUBINCL) -L/project/public -lftp -lm -lc
 	cp ftpclient ../bin/.
 
+ftpgetfiles:ftpgetfiles.cpp
+	g++ $(CFLAGS) -no-pie -o ftpgetfiles ftpgetfiles.cpp $(PUBINCL) $(PUBCPP) /project/public/_ftp.cpp /project/public/libftp.a -lm -lc
+	cp ftpgetfiles ../bin/.
+
 clean:
-	rm -f procctl shm HBMechanism checkproc test gzipfiles deletefiles ftpclient
+	rm -f procctl shm HBMechanism checkproc test gzipfiles deletefiles ftpclient ftpgetfiles

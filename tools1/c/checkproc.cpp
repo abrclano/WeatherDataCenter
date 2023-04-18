@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
   if ((shmid = shmget((key_t)SHMKEYP, MAXNUMP * sizeof(struct st_procinfo),
                       0666 | IPC_CREAT)) == -1) {
     logfile.Write("创建/获取共享内存(%x)失败。\n", SHMKEYP);
-    return false;
+    return -1;
   }
 
   // 将共享内存连接到当前进程的地址空间。
