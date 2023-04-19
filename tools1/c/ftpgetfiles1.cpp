@@ -9,7 +9,6 @@
 
 #include <csignal>
 #include <cstring>
-#include <vector>
 
 #include "_ftp.h"
 #include "_public.h"
@@ -17,27 +16,13 @@
 struct st_arg {
   char host[31];  // 远程服务器的IP和端口
   int mode;  // 传输模式，1-被动模式，2-主动模式，缺省采用被动模式
-  char username[31];       // 远程服务器ftp的用户名
-  char password[31];       // 远程服务器ftp的密码
-  char remotepath[301];    // 远程服务器存放文件的目录
-  char localpath[301];     // 本地文件存放的目录
-  char matchname[101];     // 待下载文件匹配的规则
-  char listfilename[301];  // 下载前列出服务器文件名的文件
+  char username[31];     // 远程服务器ftp的用户名
+  char password[31];     // 远程服务器ftp的密码
+  char remotepath[301];  // 远程服务器存放文件的目录
+  char localpath[301];   // 本地文件存放的目录
+  char matchname[101];   // 待下载文件匹配的规则
 } starg;
 
-// 文件信息的结构体
-struct st_fileinfo {
-  char filename[3001];  // 文件名
-  char mtime[21];       // 文件时间
-};
-
-// 存放下载前列出服务器文件名的容器
-vector<st_fileinfo> vlistfile;
-
-// 把ftp.nlist()方法获取到的list文件加载到容器vlistfile中
-bool LoadListFile();
-
-// 日志类
 CLogFile logfile;
 
 Cftp ftp;
@@ -49,9 +34,6 @@ void _help();
 
 // 把xml解析到参数starg结构中
 bool _xml2arg(char* strxmlbuffer);
-
-// 下载文件功能的函数
-bool _ftpgetfiles();
 
 int main(int argc, char* argv[]) {
   // 小目标，把ftp服务上某目录中的文件下载到本地的目录中
@@ -79,13 +61,22 @@ int main(int argc, char* argv[]) {
   }
 
   // 登录ftp服务器
-  if (ftp.login(starg.host, starg.username, starg.password) == false) {
-    logfile.Write("ftp.login(%s) failed.\n", starg.host);
-    return -1;
-  }
-  logfile.Write("ftp.login ok.\n");
-  _ftpgetfiles();
-  ftp.logout();
+
+  // 进入ftp服务器存放文件的目录
+
+  // 调用ftp.nlist()方法列出服务器目录中的文件，结果存放到本地文件中
+
+  // 把ftp.nlist()方法获取到的list文件加载到容器vfilelist中
+
+  // 遍历容器vfilelist
+  /*
+    for (int ii=0;ii<vlistfile.size();ii++)
+    {
+      // 调用ftp.get()方法从服务器下载文件
+    }
+  */
+
+  // ftp.logout();
   return 0;
 }
 
@@ -95,45 +86,6 @@ void EXIT(int sig) {
   exit(0);
 }
 
-// 下载文件功能的函数
-bool _ftpgetfiles() {
-  // 进入ftp服务器存放文件的目录
-  if (ftp.chdir(starg.remotepath) == false) {
-    logfile.Write("ftp.chdir(%s) failed.\n", starg.remotepath);
-    return false;
-  }
-  // 调用ftp.nlist()方法列出服务器目录中的文件，结果存放到本地文件
-  if (ftp.nlist(".", starg.listfilename) == false) {
-    logfile.Write("ftp.nlist(%s) failed.\n", starg.remotepath);
-    return false;
-  }
-  // 把ftp.nlist()方法获取到的list文件加载到容器vlistfile中
-  if (LoadListFile() == false) {
-    logfile.Write("LoadListFile() failed.\n");
-    return false;
-  }
-
-  char strremotefilename[031], strlocalfilename[301];
-
-  // 遍历容器vlistfile
-  for (auto it = vlistfile.begin(); it != vlistfile.end(); it++) {
-    SNPRINTF(strremotefilename, sizeof(strremotefilename), 300, "%s/%s",
-             starg.remotepath, it->filename);
-    SNPRINTF(strlocalfilename, sizeof(strlocalfilename), 300, "%s/%s",
-             starg.localpath, it->filename);
-
-    // 调用ftp.get()方法从服务器下载文件
-    logfile.Write("get %s ...\n", strremotefilename);
-
-    if (ftp.get(strremotefilename, strlocalfilename) == false) {
-      logfile.WriteEx("failed.\n");
-      break;
-    }
-    logfile.WriteEx("ok.\n");
-  }
-  return true;
-}
-
 void _help() {
   printf("\n");
   printf("Using:/project/tools1/bin/ftpgetfiles logfilename xmlbuffer\n\n");
@@ -141,8 +93,8 @@ void _help() {
   printf(
       "Sample:/project/tools1/bin/procctl 30 /project/tools1/bin/ftpgetfiles "
       "/log/idc/ftpgetfiles_surfdata.log "
-      "\"<host>127.0.0.1:21</host><mode>1</mode><username>alina</"
-      "username><password>qq520</password><localpath>/idcdata/surfdata</"
+      "\"<host>127.0.0.1:21</host><mode>1</mode><username>wucz</"
+      "username><password>wuczpwd</password><localpath>/idcdata/surfdata</"
       "localpath><remotepath>/tmp/idc/surfdata</"
       "remotepath><matchname>SURF_ZH*.XML,SURF_ZH*.CSV</matchname>\"\n\n\n");
 
@@ -215,31 +167,5 @@ bool _xml2arg(char* strxmlbuffer) {
     return false;
   }
 
-  return true;
-}
-
-// 把ftp.nlist() 方法获取到的list文件加载到容器vlistfile中
-bool LoadListFile() {
-  vlistfile.clear();
-  CFile File;
-  if (File.Open(starg.listfilename, "r") == false) {
-    logfile.Write("File.Open(%s) failed.\n", starg.listfilename);
-    return false;
-  }
-  st_fileinfo stfileinfo;
-
-  while (true) {
-    memset(&stfileinfo, 0, sizeof(st_fileinfo));
-    if (File.Fgets(stfileinfo.filename, 300, true) == false) {
-      break;
-    }
-    if (MatchStr(stfileinfo.filename, starg.matchname) == false) {
-      continue;
-    }
-    vlistfile.push_back(stfileinfo);
-  }
-  for (auto it = vlistfile.begin(); it != vlistfile.end(); it++) {
-    logfile.Write("filename=%s=\n", it->filename);
-  }
   return true;
 }
