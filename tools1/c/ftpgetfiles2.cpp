@@ -1,18 +1,25 @@
+/**
+****************************************************************
+* @file:	ftpgetfiles.cpp
+* @author:	alina
+* @date:	2023.04.18 17:37:27 Tuesday
+* @brief:	ftp下载文件
+****************************************************************
+**/
+
 #include "_ftp.h"
 #include "_public.h"
 
 // 程序运行参数的结构体
 struct st_arg {
   char host[31];  // 远程服务器的IP和端口
-  int mode;  // 传输模式1-被动模式2-主动模式缺省采用被动模式
+  int mode;  // 传输模式.1-被动模式.2-主动模式.缺省采用被动模式
   char username[31];       // 远程服务器ftp的用户名
   char password[31];       // 远程服务器ftp的密码
   char remotepath[301];    // 远程服务器存放文件的目录
   char localpath[301];     // 本地文件存放的目录
   char matchname[101];     // 待下载文件匹配的规则
   char listfilename[301];  // 下载前列出服务器文件名的文件
-  int ptype;  // 下载后服务器文件的处理方式:1-什么也不做;2-删除;3-备份
-  char remotepathbak[301];  // 下载后服务器文件的备份目录
 } starg;
 
 // 文件信息的结构体
@@ -42,6 +49,7 @@ bool _xmltoarg(char *strxmlbuffer);
 bool _ftpgetfiles();
 
 int main(int argc, char *argv[]) {
+  // 小目标.把ftp服务上某目录中的文件下载到本地的目录中
   if (argc != 3) {
     _help();
     return -1;
@@ -60,7 +68,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  // 解析xml得到程序运行的参数
+  // 解析xml.得到程序运行的参数
   if (_xmltoarg(argv[2]) == false) return -1;
 
   // 登录ftp服务器
@@ -88,7 +96,7 @@ bool _ftpgetfiles() {
     return false;
   }
 
-  // 调用ftp.nlist()方法列出服务器目录中的文件结果存放到本地文件中
+  // 调用ftp.nlist()方法列出服务器目录中的文件.结果存放到本地文件中
   if (ftp.nlist(".", starg.listfilename) == false) {
     logfile.Write("ftp.nlist(%s) failed.\n", starg.remotepath);
     return false;
@@ -109,44 +117,22 @@ bool _ftpgetfiles() {
     SNPRINTF(strlocalfilename, sizeof(strlocalfilename), 300, "%s/%s",
              starg.localpath, it->filename);
 
+    // 调用ftp.get()方法从服务器下载文件
     logfile.Write("get %s ...", strremotefilename);
 
-    // 调用ftp.get()方法从服务器下载文件
     if (ftp.get(strremotefilename, strlocalfilename) == false) {
       logfile.WriteEx("failed.\n");
-      return false;
+      break;
     }
 
     logfile.WriteEx("ok.\n");
-
-    // 删除文件
-    if (starg.ptype == 2) {
-      if (ftp.ftpdelete(strremotefilename) == false) {
-        logfile.Write("ftp.ftpdelete(%s) failed.\n", strremotefilename);
-        return false;
-      }
-      logfile.Write("ftp.ftpdelete() ok.\n");
-    }
-
-    // 转存到备份目录
-    if (starg.ptype == 3) {
-      char strremotefilenamebak[301];
-      SNPRINTF(strremotefilenamebak, sizeof(strremotefilenamebak), 300, "%s/%s",
-               starg.remotepathbak, it->filename);
-      if (ftp.ftprename(strremotefilename, strremotefilenamebak) == false) {
-        logfile.Write("ftp.ftprename(%s,%s) failed.\n", strremotefilename,
-                      strremotefilenamebak);
-        return false;
-      }
-      logfile.Write("ftp.ftprename() ok.\n");
-    }
   }
 
   return true;
 }
 
 void EXIT(int sig) {
-  printf("程序退出sig=%d\n\n", sig);
+  printf("程序退出.sig=%d\n\n", sig);
 
   exit(0);
 }
@@ -163,35 +149,26 @@ void _help() {
       "localpath><remotepath>/tmp/idc/surfdata</"
       "remotepath><matchname>SURF_ZH*.XML,SURF_ZH*.CSV</"
       "matchname><listfilename>/idcdata/ftplist/ftpgetfiles_surfdata.list</"
-      "listfilename><ptype>3</ptype><remotepathbak>/tmp/idc/surfdatabak</"
-      "remotepathbak>\"\n\n\n");
+      "listfilename>\"\n\n\n");
 
-  printf("本程序是通用的功能模块用于把远程ftp服务器的文件下载到本地目录\n");
+  printf("本程序是通用的功能模块.用于把远程ftp服务器的文件下载到本地目录\n");
   printf("logfilename是本程序运行的日志文件\n");
-  printf("xmlbuffer为文件下载的参数如下:\n");
+  printf("xmlbuffer为文件下载的参数.如下：\n");
   printf("<host>127.0.0.1:21</host> 远程服务器的IP和端口\n");
-  printf("<mode>1</mode> 传输模式1-被动模式2-主动模式缺省采用被动模式\n");
-  printf("<username>alina</username> 远程服务器ftp的用户名\n");
-  printf("<password>qq520</password> 远程服务器ftp的密码\n");
+  printf("<mode>1</mode> 传输模式.1-被动模式.2-主动模式.缺省采用被动模式\n");
+  printf("<username>wucz</username> 远程服务器ftp的用户名\n");
+  printf("<password>wuczpwd</password> 远程服务器ftp的密码\n");
   printf(
       "<remotepath>/tmp/idc/surfdata</remotepath> "
       "远程服务器存放文件的目录\n");
   printf("<localpath>/idcdata/surfdata</localpath> 本地文件存放的目录\n");
   printf(
       "<matchname>SURF_ZH*.XML,SURF_ZH*.CSV</matchname> 待下载文件匹配的规则"
-      "不匹配的文件不会被下载本字段尽可能设置精确不建议用*"
+      "不匹配的文件不会被下载.本字段尽可能设置精确.不建议用*"
       "匹配全部的文件\n");
   printf(
       "<listfilename>/idcdata/ftplist/ftpgetfiles_surfdata.list</listfilename> "
-      "下载前列出服务器文件名的文件\n");
-  printf(
-      "<ptype>1</ptype> "
-      "文件下载成功后远程服务器文件的处理方式:1-什么也不做;2-删除;3-"
-      "备份如果为3还要指定备份的目录\n");
-  printf(
-      "<remotepathbak>/tmp/idc/surfdatabak</remotepathbak> "
-      "文件下载成功后服务器文件的备份目录此参数只有当ptype="
-      "3时才有效\n\n\n");
+      "下载前列出服务器文件名的文件\n\n\n");
 }
 
 // 把xml解析到参数starg结构中
@@ -205,7 +182,7 @@ bool _xmltoarg(char *strxmlbuffer) {
   }
 
   GetXMLBuffer(strxmlbuffer, "mode",
-               &starg.mode);  // 传输模式1-被动模式2-主动模式缺省采用被动模式
+               &starg.mode);  // 传输模式.1-被动模式.2-主动模式.缺省采用被动模式
   if (starg.mode != 2) starg.mode = 1;
 
   GetXMLBuffer(strxmlbuffer, "username", starg.username,
@@ -250,20 +227,6 @@ bool _xmltoarg(char *strxmlbuffer) {
     return false;
   }
 
-  // 下载后服务器文件的处理方式:1-什么也不做;2-删除;3-备份
-  GetXMLBuffer(strxmlbuffer, "ptype", &starg.ptype);
-  if ((starg.ptype != 1) && (starg.ptype != 2) && (starg.ptype != 3)) {
-    logfile.Write("ptype is error.\n");
-    return false;
-  }
-
-  GetXMLBuffer(strxmlbuffer, "remotepathbak", starg.remotepathbak,
-               300);  // 下载后服务器文件的备份目录
-  if ((starg.ptype == 3) && (strlen(starg.remotepathbak) == 0)) {
-    logfile.Write("remotepathbak is null.\n");
-    return false;
-  }
-
   return true;
 }
 
@@ -289,11 +252,6 @@ bool LoadListFile() {
 
     vlistfile.push_back(stfileinfo);
   }
-
-  /*
-  for (auto it = vlistfile.begin(); it != vlistfile.end(); it++)
-    logfile.Write("filename=%s=\n",it->filename);
-  */
 
   return true;
 }
